@@ -31,7 +31,10 @@
 
 > "사용자(또는 시스템)가 **하나의 목적으로** 수행하는 행동은 무엇인가?"
 
-Use Case 하나 = 하나의 `execute()` 메서드. 여러 Entity를 조율하되, 규칙 자체는 구현하지 않습니다.
+Use Case 하나 = 하나의 `execute()` 메서드. 여러 Entity를 조율하되, 규칙 자체는 구현하지 않습니다. 규칙은 Entity 의 메서드에서 구현합니다.
+
+- 규칙(무엇이 유효한가) → Entity가 책임 
+- 흐름(누가, 언제, 어떤 순서로) → Use Case가 책임
 
 ## Repository 인터페이스를 찾는 질문
 
@@ -44,7 +47,32 @@ Use Case 하나 = 하나의 `execute()` 메서드. 여러 Entity를 조율하되
 
 구현 방식(SQL, NoSQL, 파일)은 이 단계에서 결정하지 않습니다.
 
-## 파일 구조 템플릿
+### 핵심: "무엇을"과 "어떻게"를 분리한다
+
+Repository는 **Use Case가 필요로 하는 데이터 동작만 약속하는 계약**입니다. 실제 저장 기술은 나중에 갈아 끼웁니다.
+
+```python
+# application/repositories.py  ← "무엇을" (계약)
+class BookRepository(ABC):
+    @abstractmethod
+    def get(self, book_id): ...
+    @abstractmethod
+    def save(self, book): ...
+
+# adapters/repositories.py  ← "어떻게" (구현. 교체 가능)
+class SqlBookRepository(BookRepository):      # 진짜 SQL
+    def get(self, book_id): ...
+
+class InMemoryBookRepository(BookRepository): # 딕셔너리 (테스트용)
+    def get(self, book_id): ...
+```
+
+이렇게 분리하면:
+
+- **테스트가 쉬움** — DB 없이 `InMemory` 구현체로 Use Case를 검증
+- **저장소 교체가 자유로움** — DB를 바꿔도 계약은 그대로라 비즈니스 로직은 안 건드림
+
+## 파일 구조 템플릿(예시)
 
 어떤 프로젝트든 동일한 구조에서 시작합니다.
 
