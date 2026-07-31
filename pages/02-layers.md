@@ -5,7 +5,7 @@
 
 - 재고 관리 : 책마다 사본(copies) 수가 있고, 대출 가능한 사본이 없으면 대출 불가
 - 회원당 한도 : 회원은 동시에 최대 5권까지만 대출 가능
-- 연체 제한 : 연체 중인 회원은 새로 대출할 수 없음
+- 연체 제한 : 연체 중인 회원은 새로 대출할 수 없음.
 - 대출/연장 기간 : 대출 기간 14일, 연체 전에 한해 최대 2회(각 7일 ) 연장 가능
 
 
@@ -49,19 +49,11 @@
 ```
 domain          →  (없음)
 application     →  domain
-adapters        →  domain, application, (외부 라이브러리: SQLAlchemy 등)
-# --- 여기까지가 안쪽 규칙과 직접 맞닿는 부분 ---
-infrastructure  →  (외부 라이브러리만)          ┐ Frameworks & Drivers
-main.py         →  전 레이어  ← 유일한 연결 지점  ┘ (한 레이어)
+adapters        →  domain, application
+infrastructure  →  (외부 라이브러리만)
+main.py         →  전 레이어  ← 유일한 연결 지점
 ```
 
-`adapters`가 `domain`·`application`뿐 아니라 SQLAlchemy 같은 외부 라이브러리도 import하는 점에 주의하세요. 앞서 본 `SqlBookRepository`가 실제로 SQL을 실행하려면 ORM이 필요하기 때문입니다. 이때 규칙은 이렇게 나뉩니다.
-
-- **리포지토리 인터페이스(추상)** 는 `application`(또는 `domain`)에 둡니다. 유스케이스는 "책을 하나 찾아와" 같은 **약속(메서드 시그니처)** 만 알면 되므로, 이 추상은 외부 기술을 전혀 모릅니다.
-- **구현체 `SqlBookRepository`** 는 `adapters`에 두고, 여기서만 SQLAlchemy를 import해 실제 SQL을 실행합니다.
-
-즉 안쪽(`application`)은 인터페이스에만 의존하고, 그 인터페이스를 실제로 채우는 바깥쪽 구현(`adapters`)이 외부 라이브러리를 떠안습니다. 이렇게 하면 화살표(의존성)는 여전히 **바깥 → 안쪽** 한 방향으로 유지됩니다.
-
-이 규칙 덕분에 `domain/`과 `application/`은 FastAPI, SQLAlchemy를 전혀 모르는 상태로 유지됩니다. 프레임워크를 교체해도 안쪽 두 레이어는 수정할 필요가 없고, 바뀌는 곳은 `adapters`와 `infrastructure`까지입니다.
+이 규칙 덕분에 `domain/`과 `application/`은 FastAPI, SQLAlchemy를 전혀 모르는 상태로 유지됩니다. 프레임워크를 교체해도 안쪽 두 레이어는 수정할 필요가 없습니다.
 
 이 4개 layer  에 대한 이름은 책마다 조금씩 다르게 표현되기도 합니다. 여기에서는 위의 표현대로 엔티티, 유스케이스, 인터페이스 어댑터, 프레임워크와 드라이버로 구분하도록 하겠습니다.
