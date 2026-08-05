@@ -4,25 +4,13 @@
 
 ## 먼저 큰 그림부터
 
-코드를 보기 전에, 우리가 만들 Entity 세 개가 각각 **어떤 데이터를 가지고(속성)**, **무엇을 할 수 있는지(행동)** 개요를 그림으로 살펴봅니다.
+코드를 보기 전에, 우리가 만들 Entity 세 개가 각각 **어떤 데이터를 가지고(속성)**, **무엇을 할 수 있는지(행동)** 개요를 살펴봅니다.
 
-```text
-  Book (도서)             Member (회원)            Loan (대출 기록)
-────────────────────   ────────────────────   ────────────────────────
-[속성 — 데이터]        [속성 — 데이터]        [속성 — 데이터]
-id                     id                     id
-title (제목)           name (이름)            book_id, member_id
-author (저자)          active_loans_count     borrowed_at (대출일)
-total_copies (총권수)   (현재 대출 권수)       due_at (반납 예정일)
-available_copies       has_overdue_loan       returned_at (반납일)
- (대출 가능 권수)       (연체 여부)            extension_count (연장 횟수)
-
-[행동 — 규칙]          [행동 — 규칙]          [행동 — 규칙]
-borrow_copy()  빌려줌  assert_can_borrow()    new()          대출 발급
-return_copy()  반납함   대출 가능한지 검사    extend()       기간 연장
-has_available_copy()   register_borrow() 대출 is_overdue()   연체인지 판정
- 재고 있는지 확인      register_return() 반납 mark_returned() 반납 처리
-```
+| Entity | 속성 (무엇을 가지나) | 행동 (무엇을 하나) |
+| --- | --- | --- |
+| 📕 **Book** (도서) | `id`, `title`(제목), `author`(저자), `total_copies`(총 권수), `available_copies`(대출 가능 권수) | `borrow_copy()` 빌려줌<br>`return_copy()` 반납받음<br>`has_available_copy()` 재고 확인 |
+| 👤 **Member** (회원) | `id`, `name`(이름), `active_loans_count`(현재 대출 권수), `has_overdue_loan`(연체 여부) | `assert_can_borrow()` 대출 가능한지 검사<br>`register_borrow()` 대출 반영<br>`register_return()` 반납 반영 |
+| 📄 **Loan** (대출 기록) | `id`, `book_id`, `member_id`, `borrowed_at`(대출일), `due_at`(반납 예정일), `returned_at`(반납일), `extension_count`(연장 횟수) | `extend()` 기간 연장<br>`is_overdue()` 연체 판정<br>`mark_returned()` 반납 처리 |
 
 한 문장으로 요약하면 이렇습니다.
 
