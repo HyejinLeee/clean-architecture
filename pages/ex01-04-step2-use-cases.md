@@ -6,7 +6,7 @@
 
 코드를 보기 전에, 우리가 만들 Use Case 네 개가 각각 **어떤 시나리오를**, **어떤 순서로 처리하는지** 개요를 살펴봅니다.
 
-한 문장으로 요약하면 이렇습니다.
+네가지의 use case : 대출, 반납, 연장, 대출 목록 조회
 
 - **BorrowBookUseCase(대출)** 은 `회원 검증(assert_can_borrow) → 재고 차감(borrow_copy) → 대출 기록 생성(Loan.new) → loan·member·book 각각 저장` 순서로 대출을 완성합니다. 재고와 회원 권수가 바뀌므로 **반드시 각각 저장**해야 반영됩니다.
 - **ReturnBookUseCase(반납)** 은 `반납 처리(mark_returned) → 재고 복구(return_copy) → 회원 권수 감소(register_return) → 각각 저장` 순서로 반납을 처리합니다.
@@ -14,6 +14,8 @@
 - **ListMemberLoansUseCase(대출 목록)** 은 상태를 바꾸지 않고 회원의 대출 목록을 **조회만** 합니다.
 
 각 Use Case가 규칙을 직접 구현하지 않고 Entity 메서드를 올바른 순서로 호출한다는 점을 염두에 두고, 이제 실제 코드를 봅니다.
+
+> 아래 코드에서 각 Use Case가 의존하는 `BookRepository`, `MemberRepository`, `LoanRepository`는 데이터를 저장·조회하는 **방법만 약속한 추상 Repository 인터페이스**입니다. Use Case는 이 인터페이스에만 의존할 뿐, 실제 저장 방식이 SQLite인지 인메모리인지는 알지 못합니다(DIP). 지금은 "저장소를 다루는 창구" 정도로만 이해하고 넘어가면 되고, 세 인터페이스의 실제 정의는 바로 다음 **STEP 3(Interface)**에서 자세히 다룹니다.
 
 ```python
 # application/use_cases.py
