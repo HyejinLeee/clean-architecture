@@ -12,4 +12,5 @@
   * [1-6. STEP 4 · Adapters](pages/ex01-06-step4-adapters.md)
   * [1-7. STEP 5 · Frameworks & Drivers](pages/ex01-07-step5-frameworks.md)
   * [1-8. STEP 6 · Testing](pages/ex01-08-step6-testing.md)
-  * [1-9. 완성 & 확장 아이디어](pages/ex01-09-final.md)
+  * [1-9. 예외 처리](pages/ex01-09-error-handling.md)
+  * [1-10. 완성 & 확장 아이디어](pages/ex01-09-final.md)
