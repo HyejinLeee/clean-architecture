@@ -1,4 +1,4 @@
-# 09. STEP 5 · Frameworks & Drivers — FastAPI 엔드포인트로 조립하기
+# 1-08. STEP 5 · Frameworks & Drivers — FastAPI 엔드포인트로 조립하기
 
 `main.py`는 모든 레이어를 조립(wiring)하는 유일한 곳입니다. 도메인 예외는 여기서 HTTP 응답으로 변환됩니다.
 
