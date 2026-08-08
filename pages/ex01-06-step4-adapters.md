@@ -2,11 +2,9 @@
 
 ORM 모델과 domain Entity는 서로 다른 클래스입니다. Adapters 레이어가 둘 사이를 변환합니다.
 
-## 먼저 큰 그림부터
+## 개요
 
-코드를 보기 전에, Adapters 레이어가 만들어 낼 조각들이 각각 **어떤 역할을 하는지** 개요를 살펴봅니다.
-
-한 문장으로 요약하면 이렇습니다.
+코드를 보기 전에, Adapters 레이어가 만들어 낼 조각들이 각각 **어떤 역할을 하는지** 살펴봅니다.
 
 - **ORM 모델(`BookModel`·`LoanModel` 등)** 은 DB 테이블과 1:1로 대응하는 SQLAlchemy 클래스입니다.
 - **매핑 함수(`_loan_to_entity`)** 는 ORM 모델을 순수 domain Entity로 변환해, SQLAlchemy가 안쪽 레이어로 새어들지 않게 막습니다.

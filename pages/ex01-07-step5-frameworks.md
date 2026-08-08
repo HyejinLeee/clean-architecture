@@ -2,11 +2,9 @@
 
 `main.py`는 모든 레이어를 조립(wiring)하는 유일한 곳입니다. 도메인 예외는 여기서 HTTP 응답으로 변환됩니다.
 
-## 먼저 큰 그림부터
+## 개요
 
-코드를 보기 전에, `main.py`가 하는 일과 엔드포인트 구성을 개요로 살펴봅니다.
-
-한 문장으로 요약하면 이렇습니다.
+코드를 보기 전에, `main.py`가 하는 일과 엔드포인트 구성을 살펴봅니다.
 
 - **엔드포인트 3개** — `POST /loans`(대출)·`POST /loans/{id}/return`(반납)·`POST /loans/{id}/extend`(연장)이 각각 Use Case 하나에 연결됩니다.
 - **조립(wiring)** — 요청마다 Repository 구현체를 만들어 Use Case에 주입하고 `execute()`를 호출합니다.
