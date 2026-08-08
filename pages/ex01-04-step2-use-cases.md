@@ -2,9 +2,9 @@
 
 각 사용자 시나리오를 하나의 Use Case로 조립합니다.
 
-## 먼저 큰 그림부터
+## 개요
 
-우리가 만들 Use Case 네 개가 각각 **어떤 시나리오를**, **어떤 순서로 처리하는지** 개요를 살펴봅니다.
+코드를 보기 전에, 우리가 만들 Use Case 네 개가 각각 **어떤 시나리오를**, **어떤 순서로 처리하는지** 살펴봅니다.
 
 네가지의 use case : 대출, 반납, 연장, 대출 목록 조회
 
@@ -38,12 +38,12 @@ class BorrowBookUseCase:
         member.assert_can_borrow()        # 연체·대출 한도
         book.borrow_copy()                # 재고
 
-        # 3. 상태 변경
+        # 3. 대출 기록 생성 (저장하며 id 발급) + 회원 상태 변경
         loan = Loan.new(book_id=book.id, member_id=member.id, today=today)
-        loan = self.loan_repo.save(loan)
-        member.register_borrow()          # 회원 대출 권수 +1
+        loan = self.loan_repo.save(loan) 
+        member.register_borrow()     
 
-        # 4. 저장 (바뀐 것을 각각 저장)
+        # 4. 바뀐 member·book을 저장소에 반영
         self.member_repo.save(member)
         self.book_repo.save(book)
         return loan

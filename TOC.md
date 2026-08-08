@@ -3,7 +3,7 @@
 * [01. 클린 아키텍처란 무엇인가?](pages/01-intro.md)
 * [02. 4개 레이어 기본 개념](pages/02-layers.md)
 * [03. 어떤 프로젝트에든 적용하는 방법](pages/03-how-to-apply.md)
-* [예제 1 작성중. 도서 대출 관리 시스템](pages/ex01-00-overview.md)
+* [예제 1 __작성중__. 도서 대출 관리 시스템](pages/ex01-00-overview.md)
   * [1-01. 비즈니스 규칙 정의](pages/ex01-01-business-rules.md)
   * [1-02. 도메인 모델 설계](pages/ex01-02-domain-model.md)
   * [1-03. STEP 1 · Entities](pages/ex01-03-step1-entities.md)
