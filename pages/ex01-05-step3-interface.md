@@ -1,4 +1,4 @@
-# 07. STEP 3 · Interface — Repository 인터페이스로 DB를 추상화하기
+# 1-06. STEP 3 · Interface — Repository 인터페이스로 DB를 추상화하기
 
 Use Case는 이 추상 클래스만 알고, 실제 구현(SQLAlchemy/인메모리)은 전혀 알지 못합니다.
 

@@ -1,4 +1,4 @@
-# 08. STEP 4 · Adapters — SQLAlchemy로 실제 구현 만들기
+# 1-07. STEP 4 · Adapters — SQLAlchemy로 실제 구현 만들기
 
 ORM 모델과 domain Entity는 서로 다른 클래스입니다. Adapters 레이어가 둘 사이를 변환합니다.
 
@@ -106,6 +106,20 @@ class SqlLoanRepository(LoanRepository):
         models = self.session.query(LoanModel).filter(LoanModel.member_id == member_id).all()
         return [_loan_to_entity(m) for m in models]
 ```
+
+> ### 💡 헷갈리기 쉬운 점 — `save()`는 구현마다 다르게 동작합니다
+>
+> Use Case는 대출 시 `book_repo.save(book)`·`member_repo.save(member)`도 호출하지만, **SQL 구현에서는 이 두 호출이 바뀐 값을 실제로 저장하지 않습니다.**
+>
+> | 호출 | SQL 구현에서 실제 동작 | 바뀐 값이 DB에 반영? |
+> |---|---|---|
+> | `loan_repo.save(loan)` | `loans`에 행 INSERT/UPDATE | ✅ 진짜 저장 |
+> | `book_repo.save(book)` | `total_copies`만 반영 | ❌ `available_copies`는 컬럼이 없어 무시 |
+> | `member_repo.save(member)` | 기존 회원이면 아무것도 안 함 | ❌ `active_loans_count`는 저장 안 함 |
+>
+> 재고·대출 권수는 저장하는 값이 아니라 `loans`에서 매번 계산하는 **파생값**이기 때문입니다. 그래서 대출로 인한 실제 DB 변화는 **`loans`에 행 하나 추가**뿐이고, 재고·권수는 다음 조회 때 자동으로 다시 계산됩니다.
+>
+> **그런데도 Use Case가 두 `save()`를 부르는 이유**는, Use Case가 "어떤 구현인지"를 몰라야 하기 때문입니다. 테스트용 `InMemoryRepository`처럼 객체를 통째로 저장하는 구현에서는 이 `save()`가 **반드시 필요**합니다(안 부르면 재고 −1이 사라짐). Use Case는 원칙대로 "바꿨으면 저장한다"만 지키고, 그 요청을 어떻게 이행할지(전부 저장 / 일부는 파생이라 무시)는 각 구현이 알아서 처리합니다.
 
 ## 엔티티 ↔ ORM 분리가 중요한 이유
 

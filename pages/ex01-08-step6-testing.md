@@ -1,4 +1,4 @@
-# 10. STEP 6 · Testing — DB 없이 비즈니스 규칙 검증하기
+# 1-09. STEP 6 · Testing — DB 없이 비즈니스 규칙 검증하기
 
 `InMemoryRepository`로 Use Case를 테스트하면 서버 실행 없이 0.05초 만에 전체 규칙을 검증할 수 있습니다.
 
