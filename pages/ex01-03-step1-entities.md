@@ -12,6 +12,8 @@
 - **Member(회원)** 은 `id·이름·현재 대출 권수·연체 여부`를 가지고, 해당 회원에 대해 대출이 가능한지 스스로 검사(assert_can_borrow)하고 대출/반납 시 해당 회원의 대출권수를 갱신합니다.
 - **Loan(대출 기록)** 은 `누가·어떤 책을·언제 빌려서·언제까지인지`를 가지고, 연장(extend)·연체 판정(is_overdue)·반납 처리(mark_returned)를 합니다.
 
+![Book·Member·Loan 관계 다이어그램](../assets/book-loan-member-diagram.svg)
+
 > ### 🧭 설계 사고법 — "이 필드가 왜 필요한가"를 판단하는 법
 >
 > `active_loans_count`·`available_copies` 같은 필드는 "저장할 데이터"에서 나오지 않습니다. **규칙(행동)에서 거꾸로 도출** 합니다.
