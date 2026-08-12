@@ -1,0 +1,39 @@
+<svg width="680" height="350" viewBox="0 0 680 350" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>도서, 대출 기록, 회원의 관계를 보여주는 그림</title>
+<desc>가운데 대출 기록 카드가 book_id와 member_id라는 점선 화살표로 왼쪽의 도서, 오른쪽의 회원을 각각 가리키는 그림. 대출 기록은 도서와 회원을 직접 참조하지 않고 id로만 연결됨을 나타낸다.</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+  <path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+
+<rect width="680" height="350" fill="#ffffff"/>
+
+<!-- Loan card (center) -->
+<rect x="280" y="60" width="120" height="70" rx="10" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text x="340" y="90" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="500" fill="#2C2C2A">대출 기록</text>
+<text x="340" y="110" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#444441">Loan</text>
+
+<!-- dashed arrows: Loan -> Book / Loan -> Member (id 참조, 직접 참조 아님) -->
+<path d="M295 130 L165 150" fill="none" stroke="#5F5E5A" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<path d="M385 130 L595 148" fill="none" stroke="#5F5E5A" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text x="220" y="132" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#444441">book_id</text>
+<text x="470" y="132" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#444441">member_id</text>
+
+<!-- Book icon (left) -->
+<rect x="110" y="150" width="90" height="110" rx="6" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<line x1="130" y1="150" x2="130" y2="260" stroke="#993C1D" stroke-width="1.2"/>
+<line x1="150" y1="170" x2="182" y2="170" stroke="#993C1D" stroke-width="1" opacity="0.5"/>
+<line x1="150" y1="190" x2="182" y2="190" stroke="#993C1D" stroke-width="1" opacity="0.5"/>
+<line x1="150" y1="210" x2="182" y2="210" stroke="#993C1D" stroke-width="1" opacity="0.5"/>
+<text x="155" y="294" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="500" fill="#4A1B0C">Book</text>
+<text x="155" y="312" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#712B13">재고(대출 가능 권수) 관리</text>
+
+<!-- Member icon (right, simple person shape) -->
+<circle cx="605" cy="168" r="20" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<path d="M572 262 Q572 208 605 208 Q638 208 638 262 Z" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="605" y="294" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="500" fill="#04342C">Member</text>
+<text x="605" y="312" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#085041">대출 자격 판단</text>
+
+<text x="340" y="338" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#5F5E5A">Loan은 Book·Member를 id로만 참조 — 직접 객체 참조 없음</text>
+</svg>
