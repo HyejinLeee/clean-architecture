@@ -84,7 +84,7 @@ class ReturnBookUseCase:
 - `loan.mark_returned(today)` — 대출을 반납 상태로 표시합니다(반납일 기록).
 - `book.return_copy()` — 차감했던 재고를 한 권 되돌립니다.
 - `member.register_return()` — 회원의 대출 권수를 −1 합니다.
-- 대출에서는 새로 만든 `loan`을 저장했다면, 반납에서는 **`loan`·`book`·`member` 세 객체가 모두 바뀌므로 셋 다 저장**합니다.
+- 대출·반납 **둘 다 `loan`·`book`·`member` 세 객체를 저장**합니다. 차이는, 대출의 `loan`은 새로 만들어(저장하며 `id` 발급) 넣는 것이고, 반납은 셋 다 **기존 객체를 수정**해 다시 저장한다는 점입니다.
 
 여기서 `book_id`, `member_id`를 직접 받지 않고 **`loan`에서 꺼내 쓴다**는 점에 주목하세요. 반납은 "어떤 대출을 되돌리는가"만 알면 나머지 대상은 대출 기록이 알려줍니다.
 
