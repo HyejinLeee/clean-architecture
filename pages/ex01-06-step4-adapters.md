@@ -4,9 +4,7 @@ ORM 모델과 domain Entity는 서로 다른 클래스입니다. Adapters 레이
 
 ## 어댑터(Adapter)란?
 
-어댑터는 **서로 다른 두 세계를 이어주는 변환기**입니다. 해외여행용 **전원 어댑터**가 한국 플러그를 유럽 콘센트에 맞춰주듯, 또는 **통역사**가 서로 다른 언어를 옮겨주듯이요.
-
-클린 아키텍처에는 말이 안 통하는 두 세계가 있습니다.
+어댑터는 **서로 다른 두 세계를 이어주는 변환기**입니다. 
 
 - **안쪽(도메인·유스케이스)** — 순수한 `Book`·`Loan` 객체와 추상 인터페이스로만 이야기합니다. DB도 웹도 모릅니다.
 - **바깥쪽(기술)** — SQLAlchemy 모델, SQLite 행, HTTP·JSON 같은 구체적인 기술로 이야기합니다.
@@ -28,20 +26,7 @@ ORM 모델과 domain Entity는 서로 다른 클래스입니다. Adapters 레이
 | **안 → 밖 (DB)** | `Book` Entity → 저장용 `BookModel` (추상 Repository "약속"을 SQLAlchemy로 구현) | `SqlBookRepository` |
 | **안 → 밖 (API)** | `Loan` Entity → JSON 응답 `LoanResponse` | `LoanResponse` |
 
-덕분에 **SQLAlchemy·FastAPI 같은 기술이 안쪽으로 새어들지 않습니다** — 도메인·유스케이스 코드엔 `import sqlalchemy`조차 없습니다. 그래서 기술을 바꿔도(예: SQLite→PostgreSQL) **어댑터만 갈아끼우면** 되고, 도메인은 그대로입니다.
-
-## 개요
-
-앞서 본 통역을 실제로 해내려면, Adapters 레이어에서 만들 조각은 **네 가지**입니다.
-
-- **ORM 모델** — DB 테이블과 1:1 대응 (`BookModel` 등)
-- **매핑 함수** — ORM ↔ Entity 변환 (`_loan_to_entity` 등)
-- **Repository 구현체** — 추상 인터페이스의 실제 DB 구현 (`SqlLoanRepository` 등)
-- **Pydantic 스키마** — Entity → API 응답 JSON (`LoanResponse`)
-
-이제 하나씩 실제 코드로 봅니다.
-
-## ORM 모델 정의
+### ORM 모델 정의도 같이 살펴봅니다.
 
 > **ORM(Object-Relational Mapping)이란?** DB의 **표(테이블·행)** 와 코드의 **객체(클래스·인스턴스)** 를 자동으로 이어주는 기술입니다. `SELECT`·`INSERT` 같은 SQL을 직접 쓰는 대신, **파이썬 객체를 다루면 라이브러리가 알아서 SQL로 번역**해 줍니다. 여기서는 SQLAlchemy를 씁니다.
 >
@@ -50,6 +35,17 @@ ORM 모델과 domain Entity는 서로 다른 클래스입니다. Adapters 레이
 > - **인스턴스 ↔ 행(row)**: `BookModel(...)` 객체 하나 = 테이블의 한 줄
 >
 > 즉 아래 클래스들은 "이 파이썬 객체를 이런 테이블에 저장해줘"라고 SQLAlchemy에 알려주는 **설계도**입니다.
+
+## 개요
+Adapter 에서 하는 일은 아래와 같습니다.
+
+- **ORM 모델** — DB 테이블과 1:1 대응 (`BookModel` 등)
+- **매핑 함수** — ORM ↔ Entity 변환 (`_loan_to_entity` 등)
+- **Repository 구현체** — 추상 인터페이스의 실제 DB 구현 (`SqlLoanRepository` 등)
+- **Pydantic 스키마** — Entity → API 응답 JSON (`LoanResponse`)
+
+이제 하나씩 실제 코드로 봅니다.
+
 
 ```python
 # adapters/orm_models.py
