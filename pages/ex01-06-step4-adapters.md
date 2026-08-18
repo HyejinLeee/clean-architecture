@@ -2,18 +2,54 @@
 
 ORM 모델과 domain Entity는 서로 다른 클래스입니다. Adapters 레이어가 둘 사이를 변환합니다.
 
+## 어댑터(Adapter)란?
+
+어댑터는 **서로 다른 두 세계를 이어주는 변환기**입니다. 해외여행용 **전원 어댑터**가 한국 플러그를 유럽 콘센트에 맞춰주듯, 또는 **통역사**가 서로 다른 언어를 옮겨주듯이요.
+
+클린 아키텍처에는 말이 안 통하는 두 세계가 있습니다.
+
+- **안쪽(도메인·유스케이스)** — 순수한 `Book`·`Loan` 객체와 추상 인터페이스로만 이야기합니다. DB도 웹도 모릅니다.
+- **바깥쪽(기술)** — SQLAlchemy 모델, SQLite 행, HTTP·JSON 같은 구체적인 기술로 이야기합니다.
+
+이 둘은 **직접 대화할 수 없습니다** (안쪽이 바깥을 알면 의존성 규칙 위반). 그래서 **Adapters가 중간에서 양방향으로 통역**합니다.
+
+```
+     안쪽 (순수 도메인)            Adapters            바깥 (기술)
+   ────────────────────       ──────────────      ────────────────────
+    Book · Loan Entity     ◀──   변환 / 통역   ──▶   SQLAlchemy · SQLite
+    Repository 인터페이스    ◀──   (양방향)      ──▶   FastAPI · JSON
+```
+
+구체적으로 이 레이어가 하는 통역은 세 가지입니다.
+
+| 방향 | 무엇을 → 무엇으로 | 담당 |
+|---|---|---|
+| **밖 → 안** | DB 행(`BookModel`) → 순수 `Book` Entity | `_book_to_entity` |
+| **안 → 밖 (DB)** | `Book` Entity → 저장용 `BookModel` (추상 Repository "약속"을 SQLAlchemy로 구현) | `SqlBookRepository` |
+| **안 → 밖 (API)** | `Loan` Entity → JSON 응답 `LoanResponse` | `LoanResponse` |
+
+덕분에 **SQLAlchemy·FastAPI 같은 기술이 안쪽으로 새어들지 않습니다** — 도메인·유스케이스 코드엔 `import sqlalchemy`조차 없습니다. 그래서 기술을 바꿔도(예: SQLite→PostgreSQL) **어댑터만 갈아끼우면** 되고, 도메인은 그대로입니다.
+
 ## 개요
 
-코드를 보기 전에, Adapters 레이어가 만들어 낼 조각들이 각각 **어떤 역할을 하는지** 살펴봅니다.
+앞서 본 통역을 실제로 해내려면, Adapters 레이어에서 만들 조각은 **네 가지**입니다.
 
-- **ORM 모델(`BookModel`·`LoanModel` 등)** 은 DB 테이블과 1:1로 대응하는 SQLAlchemy 클래스입니다.
-- **매핑 함수(`_loan_to_entity`)** 는 ORM 모델을 순수 domain Entity로 변환해, SQLAlchemy가 안쪽 레이어로 새어들지 않게 막습니다.
-- **Repository 구현체(`SqlLoanRepository`)** 는 STEP 3의 추상 인터페이스를 실제 DB 조작으로 채웁니다.
-- **Pydantic 스키마(`LoanResponse`)** 는 Entity를 API 응답(JSON) 형태로 바꿉니다.
+- **ORM 모델** — DB 테이블과 1:1 대응 (`BookModel` 등)
+- **매핑 함수** — ORM ↔ Entity 변환 (`_loan_to_entity` 등)
+- **Repository 구현체** — 추상 인터페이스의 실제 DB 구현 (`SqlLoanRepository` 등)
+- **Pydantic 스키마** — Entity → API 응답 JSON (`LoanResponse`)
 
-Entity ↔ ORM ↔ API 스키마가 서로 다른 클래스로 분리돼 있다는 점을 염두에 두고, 이제 실제 코드를 봅니다.
+이제 하나씩 실제 코드로 봅니다.
 
 ## ORM 모델 정의
+
+> **ORM(Object-Relational Mapping)이란?** DB의 **표(테이블·행)** 와 코드의 **객체(클래스·인스턴스)** 를 자동으로 이어주는 기술입니다. `SELECT`·`INSERT` 같은 SQL을 직접 쓰는 대신, **파이썬 객체를 다루면 라이브러리가 알아서 SQL로 번역**해 줍니다. 여기서는 SQLAlchemy를 씁니다.
+>
+> - **클래스 ↔ 테이블**: `BookModel` 클래스 = `books` 테이블
+> - **속성 ↔ 컬럼**: `title` 속성 = `title` 컬럼
+> - **인스턴스 ↔ 행(row)**: `BookModel(...)` 객체 하나 = 테이블의 한 줄
+>
+> 즉 아래 클래스들은 "이 파이썬 객체를 이런 테이블에 저장해줘"라고 SQLAlchemy에 알려주는 **설계도**입니다.
 
 ```python
 # adapters/orm_models.py
@@ -50,6 +86,12 @@ class LoanModel(Base):
     returned_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     extension_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 ```
+
+파이썬 클래스를 DB 테이블에 매핑한 것으로, 각 모델이 곧 하나의 테이블(`books`·`members`·`loans`)입니다.
+
+- **`Mapped[타입]` + `mapped_column(...)`** — 컬럼 하나를 선언합니다. `primary_key`(PK)·`ForeignKey`(FK)·`nullable`(NULL 허용) 같은 제약을 함께 지정합니다.
+- **파생값은 컬럼이 없습니다** — 주석처럼 `available_copies`·`active_loans_count`·`has_overdue_loan`은 저장하지 않고 `loans`에서 계산합니다. 그래서 `books`엔 제목·저자·총권수만, `members`엔 이름만 둡니다.
+- **순수 Entity와는 별개 클래스** — 이 `BookModel`(SQLAlchemy)은 STEP 1의 `Book`(dataclass)과 다릅니다. DB 기술 표현이며, 뒤의 매핑 함수가 순수 Entity로 바꿔줍니다.
 
 ## Repository 구현체
 
@@ -106,6 +148,15 @@ class SqlLoanRepository(LoanRepository):
         models = self.session.query(LoanModel).filter(LoanModel.member_id == member_id).all()
         return [_loan_to_entity(m) for m in models]
 ```
+
+STEP 3의 추상 `LoanRepository`를 SQLAlchemy로 **실제 구현**한 것입니다. `self.session`으로 DB를 조작합니다.
+
+- **`_loan_to_entity`** — 조회한 `LoanModel`(ORM)을 순수 `Loan` Entity로 바꾸는 매핑 함수. 모든 메서드가 이걸 거쳐 **항상 Entity만 반환**합니다(ORM 객체를 바깥으로 내보내지 않음).
+- **`get`** — id로 찾고, 없으면 `LoanNotFoundError`, 있으면 Entity로 변환해 반환합니다.
+- **`save`** — id가 없으면 새 행을 INSERT(`add`), 있으면 변경분만 UPDATE한 뒤 `commit`합니다.
+- **`find_active_loan_by_book`·`list_by_member`** — `query(...).filter(...)`로 조건 조회합니다. SQLAlchemy 문법은 이 클래스 안에서만 쓰이고, 결과는 다시 Entity로 변환됩니다.
+
+즉 이 클래스가 **SQL·세션 같은 DB 세부를 전담**하므로, Use Case는 STEP 3의 인터페이스만 알면 되고 SQLAlchemy를 전혀 모릅니다.
 
 > ### 💡 헷갈리기 쉬운 점 — `save()`는 구현마다 다르게 동작합니다
 >
