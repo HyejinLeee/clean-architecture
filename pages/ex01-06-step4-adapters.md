@@ -4,25 +4,46 @@ ORM 모델과 domain Entity는 서로 다른 클래스입니다. Adapters 레이
 
 ## 어댑터(Adapter)란?
 
-어댑터는 **서로 다른 두 세계를 이어주는 변환기**입니다.
+어댑터는 **STEP 3에서 정한 추상 인터페이스를 상속받아, 비어 있던 메서드를 실제 기술로 채운 구현체**입니다.
 
-- **안쪽(도메인·유스케이스)** — 순수한 `Book`·`Loan` 객체와 추상 인터페이스로만 이야기합니다.
-- **바깥쪽(기술)** — SQLAlchemy 모델, SQLite 행, HTTP·JSON 같은 구체적인 기술로 이야기합니다.
+STEP 3에서는 "무엇을 할지"만 약속하고 본문은 `...`로 비워 뒀습니다.
 
-이 둘은 **직접 대화할 수 없습니다** (안쪽이 바깥을 알면 의존성 규칙 위반). 그래서 **Adapters가 중간에서 양방향으로 통역**합니다.
+```python
+# application/repositories.py  (STEP 3 — 약속만, 본문은 비어 있음)
+class LoanRepository(ABC):
+    @abstractmethod
+    def get(self, loan_id: int) -> Loan: ...      # 어떻게는 아직 비어 있음
+    @abstractmethod
+    def save(self, loan: Loan) -> Loan: ...
+```
+
+STEP 4의 어댑터는 이 인터페이스를 **상속받아**(`class SqlLoanRepository(LoanRepository)`), 그 빈칸을 SQLAlchemy 코드로 채웁니다.
+
+```python
+# adapters/repositories.py  (STEP 4 — 상속받아 실제로 구현)
+class SqlLoanRepository(LoanRepository):              # ← STEP 3 인터페이스 상속
+    def get(self, loan_id: int) -> Loan:
+        model = self.session.get(LoanModel, loan_id)  # 빈칸을 실제 DB 조회로 채움
+        return _loan_to_entity(model)
+    ...
+```
+
+즉 **약속(인터페이스)은 STEP 3, 실제 기술 구현(어댑터)은 STEP 4**입니다. 이렇게 나누면:
+
+- **안쪽(유스케이스)** 은 `LoanRepository`(약속)에만 의존합니다. 구현이 SQLite인지 인메모리인지 모릅니다.
+- 같은 약속을 다르게 구현하면 **갈아끼울 수 있습니다** — 운영엔 `SqlLoanRepository`, 테스트엔 `InMemoryLoanRepository`.
 
 ```
-     안쪽 (순수 도메인)            Adapters            바깥 (기술)
-   ────────────────────       ──────────────      ────────────────────
-    Book · Loan Entity     ◀──   변환 / 통역   ──▶   SQLAlchemy · SQLite
-    Repository 인터페이스    ◀──   (양방향)      ──▶   FastAPI · JSON
+[STEP 3]  LoanRepository (ABC, 약속)
+                 ▲ 상속받아 구현
+[STEP 4]  SqlLoanRepository   ·   InMemoryLoanRepository   ·   PostgresLoanRepository ...
 ```
 
-도메인·유스케이스 코드엔 `import sqlalchemy`조차 없어서, 기술을 바꿔도(예: SQLite→PostgreSQL) **어댑터만 갈아끼우면** 됩니다.
+그래서 SQLite → PostgreSQL로 바꿔도 **어댑터만 새로 구현**하면 되고, 유스케이스 코드는 그대로입니다.
 
-## 개요
+## 상세 구현 예시
 
-어댑터에서 만들 조각은 **네 가지**입니다.
+크게 네 부분으로 나누어 구현을 설명합니다. 프로젝트 상황에 따라 여러 방법이 있을 수 있을 수 있으니 참고용으로 보시면 좋겠습니다.
 
 - **ORM 모델** — DB 테이블과 1:1 대응 (`BookModel` 등)
 - **매핑 함수** — ORM ↔ Entity 변환 (`_loan_to_entity` 등)
