@@ -6,7 +6,6 @@ ORM 모델과 domain Entity는 서로 다른 클래스입니다. Adapters 레이
 
 어댑터는 **STEP 3에서 정한 추상 인터페이스를 상속받아, 비어 있던 메서드를 실제 기술로 채운 구현체**입니다.
 
-STEP 3에서는 "무엇을 할지"만 약속하고 본문은 `...`로 비워 뒀습니다.
 
 ```python
 # application/repositories.py  (STEP 3 — 약속만, 본문은 비어 있음)
@@ -17,7 +16,7 @@ class LoanRepository(ABC):
     def save(self, loan: Loan) -> Loan: ...
 ```
 
-STEP 4의 어댑터는 이 인터페이스를 **상속받아**(`class SqlLoanRepository(LoanRepository)`), 그 빈칸을 SQLAlchemy 코드로 채웁니다.
+STEP 4의 어댑터는 이 인터페이스를 **상속받아**(`class SqlLoanRepository(LoanRepository)`), 그 빈칸을 SQLAlchemy 로 구현합니다.
 
 ```python
 # adapters/repositories.py  (STEP 4 — 상속받아 실제로 구현)
