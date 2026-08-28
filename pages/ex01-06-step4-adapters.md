@@ -156,7 +156,7 @@ class SqlLoanRepository(LoanRepository):
             model.due_at = loan.due_at
             model.returned_at = loan.returned_at
             model.extension_count = loan.extension_count
-        self.session.commit()
+        self.session.flush()                     # commit이 아니라 flush — 아래 설명 참고
         self.session.refresh(model)
         return _loan_to_entity(model)
 
@@ -176,10 +176,17 @@ class SqlLoanRepository(LoanRepository):
 STEP 3의 추상 `LoanRepository`를 SQLAlchemy로 **실제 구현**한 것입니다. `self.session`으로 DB를 조작합니다.
 
 - **`get`** — id로 찾고, 없으면 `LoanNotFoundError`, 있으면 `_loan_to_entity`로 변환해 반환합니다.
-- **`save`** — id가 없으면 새 행을 INSERT(`add`), 있으면 변경분만 UPDATE한 뒤 `commit`합니다.
+- **`save`** — id가 없으면 새 행을 INSERT(`add`), 있으면 변경분만 UPDATE한 뒤 `flush`합니다.
 - **`find_active_loan_by_book`·`list_by_member`** — `query(...).filter(...)`로 조건 조회합니다. SQLAlchemy 문법은 이 클래스 안에서만 쓰이고, 결과는 **항상 Entity로 변환**해 돌려줍니다.
 
 즉 이 클래스가 **SQL·세션 같은 DB 세부를 전담**하므로, Use Case는 STEP 3의 인터페이스만 알면 되고 SQLAlchemy를 전혀 모릅니다.
+
+> **왜 `commit`이 아니라 `flush`일까?** `flush()`는 지금까지의 INSERT/UPDATE를 DB로 보내
+> PK·기본값을 확정하지만, **트랜잭션을 끝내지(commit) 않습니다.** 그래서 뒤에서 문제가 생기면
+> 아직 되돌릴(rollback) 수 있습니다. 만약 저장소마다 `commit`을 하면, 한 번의 대출 요청이
+> 여러 커밋으로 쪼개져 중간에 실패했을 때 앞부분만 저장되는 사고가 납니다.
+> **커밋/롤백은 요청 경계에서 딱 한 번** 처리하며, 그 코드는 STEP 5의 `get_db()`에 있습니다.
+> (요청 하나 = 트랜잭션 하나)
 
 ## Pydantic 스키마
 
