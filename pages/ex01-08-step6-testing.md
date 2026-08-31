@@ -86,6 +86,20 @@ class InMemoryLoanRepository(LoanRepository):
         return [l for l in self._loans.values() if l.member_id == member_id]
 ```
 
+## 왜 `Mock`이 아니라 '가짜 저장소(Fake)'를 선택했나
+
+저장소 자리에 끼울 수 있는 테스트 더블은 여러 가지입니다. 흔히 쓰는 `unittest.mock`의
+`Mock` 대신, 이 프로젝트는 위처럼 **직접 구현한 `InMemoryRepository`(Fake)** 를 씁니다.
+
+Fake를 택한 이유는 다음과 같습니다.
+
+- **인터페이스를 진짜로 구현한다** — Fake는 STEP 3의 추상 `BookRepository`를 상속해 구현하므로, 인터페이스가 바뀌면 테스트에서 바로 드러납니다. 
+- **상태를 가진다 — 시나리오가 그대로 이어진다** — `save()`로 저장한 대출을 반납 테스트에서 다시 `get()`으로 꺼내 쓰는 흐름이 자연스럽게 재현됩니다. 
+- **결과를 검증한다 — 리팩터링에 강하다** — Fake 테스트는 `available_copies == 0`처럼 **결과 상태**를 확인하므로 내부 구현을 바꿔도 결과만 같으면 통과합니다. 
+- **클린 아키텍처와 결이 맞는다** — STEP 3에서 Repository를 추상화(DIP)한 덕분에, 운영엔 `SqlBookRepository`·테스트엔 `InMemoryBookRepository`를 같은 자리에 끼우기만 하면 됩니다. Fake는 이 구조를 그대로 활용하는 방식입니다.
+
+> **그럼 `Mock`은 언제?** 직접 구현할 수 없는 외부 경계(외부 HTTP API·이메일 발송·현재 시각·난수)를 잘라낼 때 유용합니다. 이 예제는 시간 의존성을 Mock 대신 `execute(today=...)`로 **값을 주입**해 풀었으므로, Mock이 필요한 지점이 없었습니다.
+
 ## Use Case 테스트 예시
 
 ```python
