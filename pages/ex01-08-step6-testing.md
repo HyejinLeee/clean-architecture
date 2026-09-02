@@ -6,12 +6,46 @@
 
 코드를 보기 전에, 테스트를 어떻게 구성하는지 살펴봅니다.
 
+- **Entity 단위 테스트** — `Loan.extend()` 같은 개별 규칙을 Entity만 만들어 직접 검증합니다. (준비물이 필요 없는 가장 단순한 테스트)
 - **가짜 저장소(`InMemoryRepository`)** — 실제 DB 대신 딕셔너리로 동작하는 Repository를 만들어 Use Case에 주입합니다.
 - **Use Case 테스트** — 대출·연장 같은 시나리오를 가짜 저장소로 실행해 규칙(재고 부족·연장 한도 등)을 검증합니다.
-- **Entity 단위 테스트** — `Loan.extend()` 같은 개별 규칙을 Entity만 만들어 직접 검증합니다.
 - **실행** — `pytest -v`로 DB·서버 없이 전체를 빠르게 돌립니다.
 
-추상 Repository 덕분에 DB 없이 테스트가 가능하다는 점을 염두에 두고, 이제 실제 코드를 봅니다.
+가장 안쪽 레이어인 **Entity 테스트부터** 보고, 그다음 가짜 저장소가 필요한 **Use Case 테스트**로 넘어갑니다.
+
+## Entity 단위 테스트 예시
+
+**Entity**는 가장 안쪽 레이어로, `Book`·`Member`·`Loan` 같은 **순수 Python 객체**입니다. DB·프레임워크·저장소를 전혀 모르고 비즈니스 규칙만 담습니다(대출 기간 14일, 연장 최대 2회 등). 의존하는 것이 없으니 **가짜 저장소도 필요 없이**, 객체 하나만 만들어 메서드를 직접 호출해 규칙을 검증할 수 있습니다. 그래서 가장 단순한 이 테스트부터 봅니다.
+
+아래는 `Loan.extend()`(연장) 규칙을 검증하는 예입니다.
+
+```python
+# tests/test_entities.py
+from datetime import date, timedelta
+
+import pytest
+
+from domain.entities import Loan
+from domain.exceptions import LoanExtensionError
+
+
+class TestLoan:
+    def test_extend_adds_7_days(self):
+        loan = Loan.new(book_id=1, member_id=1, today=date(2026, 1, 1))
+        original_due = loan.due_at
+        loan.extend(as_of=date(2026, 1, 5))
+        assert loan.due_at == original_due + timedelta(days=7)
+        assert loan.extension_count == 1
+
+    def test_extend_third_time_raises(self):
+        loan = Loan.new(book_id=1, member_id=1, today=date(2026, 1, 1))
+        loan.extend(as_of=date(2026, 1, 5))
+        loan.extend(as_of=date(2026, 1, 6))
+        with pytest.raises(LoanExtensionError):
+            loan.extend(as_of=date(2026, 1, 7))
+```
+
+Use Case는 여러 Entity와 저장소를 함께 조율하므로, 이를 테스트하려면 먼저 **가짜 저장소**가 필요합니다.
 
 ## 가짜 저장소 구현
 
@@ -159,34 +193,6 @@ class TestExtendLoanUseCase:
 
         assert extended_loan.due_at > original_due
         assert extended_loan.extension_count == 1
-```
-
-## Entity 단위 테스트 예시
-
-```python
-# tests/test_entities.py
-from datetime import date, timedelta
-
-import pytest
-
-from domain.entities import Loan
-from domain.exceptions import LoanExtensionError
-
-
-class TestLoan:
-    def test_extend_adds_7_days(self):
-        loan = Loan.new(book_id=1, member_id=1, today=date(2026, 1, 1))
-        original_due = loan.due_at
-        loan.extend(as_of=date(2026, 1, 5))
-        assert loan.due_at == original_due + timedelta(days=7)
-        assert loan.extension_count == 1
-
-    def test_extend_third_time_raises(self):
-        loan = Loan.new(book_id=1, member_id=1, today=date(2026, 1, 1))
-        loan.extend(as_of=date(2026, 1, 5))
-        loan.extend(as_of=date(2026, 1, 6))
-        with pytest.raises(LoanExtensionError):
-            loan.extend(as_of=date(2026, 1, 7))
 ```
 
 ## 테스트 실행
